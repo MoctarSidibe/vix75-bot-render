@@ -1,0 +1,5 @@
+node_modules
+error.log
+trades.log
+balance.log
+debug.log
