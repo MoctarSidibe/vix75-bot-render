@@ -140,24 +140,30 @@ function handleWebSocketMessage(msg) {
       console.log('Updated current candle:', currentCandle);
       fs.appendFileSync('debug.log', `${new Date().toISOString()} - Updated current candle: ${JSON.stringify(currentCandle)}\n`);
     }
+  } else if (msg.proposal) {
+    const buyParams = {
+      buy: msg.proposal.id,
+      price: 10,
+    };
+    console.log('Placing trade:', buyParams);
+    fs.appendFileSync('trades.log', `${new Date().toISOString()} - Placing trade: ${JSON.stringify(buyParams)}\n`);
+    sendRequest(buyParams);
+  } else if (msg.buy) {
+    console.log('Trade placed successfully:', msg.buy);
+    fs.appendFileSync('trades.log', `${new Date().toISOString()} - Trade placed: ${JSON.stringify(msg.buy)}\n`);
   }
 }
 
 function subscribeToOHLC() {
-  console.log('Subscribing to 1-minute candles for V_75');
-  fs.appendFileSync('debug.log', `${new Date().toISOString()} - Subscribing to 1-minute candles for V_75\n`);
+  console.log('Subscribing to 1-minute candles for R_75');
+  fs.appendFileSync('debug.log', `${new Date().toISOString()} - Subscribing to 1-minute candles for R_75\n`);
   sendRequest({
-    ticks_history: 'V_75',
+    ticks_history: 'R_75',
     adjust_start_time: 1,
     count: 100,
     end: 'latest',
     start: 1,
     style: 'candles',
-    granularity: 60,
-  });
-  sendRequest({
-    ohlc: 1,
-    symbol: 'V_75',
     granularity: 60,
     subscribe: 1,
   });
@@ -173,8 +179,8 @@ function priceActionStrategy() {
     return null;
   }
 
-  // Fallback: Force a test trade after 10 candles to confirm trading mechanism
-  if (candles.length >= 10 && !lastTradeTime) {
+  // Fallback: Force a test trade after 10 candles if no trades have been placed
+  if (candles.length >= 10 && lastTradeTime === 0) {
     console.log('Forcing a test call trade to verify trading mechanism');
     fs.appendFileSync('debug.log', `${new Date().toISOString()} - Forcing a test call trade to verify trading mechanism\n`);
     return 'call';
@@ -235,7 +241,7 @@ function priceActionStrategy() {
 function placeTrade(decision) {
   const tradeParams = {
     proposal: 1,
-    symbol: 'V_75',
+    symbol: 'R_75',
     contract_type: decision.toUpperCase(),
     amount: 10,
     basis: 'stake',
@@ -247,29 +253,6 @@ function placeTrade(decision) {
   console.log('Requesting trade proposal:', tradeParams);
   fs.appendFileSync('debug.log', `${new Date().toISOString()} - Requesting trade proposal: ${JSON.stringify(tradeParams)}\n`);
   sendRequest(tradeParams);
-
-  ws.once('message', (data) => {
-    try {
-      const response = JSON.parse(data);
-      console.log('Proposal response:', JSON.stringify(response));
-      fs.appendFileSync('debug.log', `${new Date().toISOString()} - Proposal response: ${JSON.stringify(response)}\n`);
-      if (response.proposal) {
-        const buyParams = {
-          buy: response.proposal.id,
-          price: 10,
-        };
-        console.log('Placing trade:', buyParams);
-        fs.appendFileSync('trades.log', `${new Date().toISOString()} - Placing trade: ${JSON.stringify(buyParams)}\n`);
-        sendRequest(buyParams);
-      } else if (response.error) {
-        console.error('Proposal error:', response.error.message);
-        fs.appendFileSync('error.log', `${new Date().toISOString()} - Proposal error: ${response.error.message}\n`);
-      }
-    } catch (error) {
-      console.error('Proposal parse error:', error.message);
-      fs.appendFileSync('error.log', `${new Date().toISOString()} - Proposal parse error: ${error.message}\n`);
-    }
-  });
 }
 
 function checkStrategy() {
