@@ -1,11 +1,12 @@
 {
-     "name": "vix75-bot",
-     "version": "1.0.0",
-     "main": "vix75trader.js",
-     "scripts": {
-       "start": "node vix75trader.js"
-     },
-     "dependencies": {
-       "ws": "^8.18.0"
-     }
-   }
+  "name": "vix75-bot",
+  "version": "1.0.0",
+  "main": "vix75trader.js",
+  "scripts": {
+    "start": "node vix75trader.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "uuid": "^8.3.2"
+  }
+}
